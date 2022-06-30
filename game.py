@@ -1,5 +1,6 @@
 import os
 import time
+import random
 
 class Entity:
     def __init__(self):
@@ -18,6 +19,7 @@ class Player(Entity):
         self.name = 'Player'
         self.hp = 10
         self.str = 1
+        
         self.lvl = 1
         self.xp = 0
         self.gold = 0
@@ -27,6 +29,7 @@ class Player(Entity):
 
 class Enemy(Entity):
     def __init__(self):
+        super().__init__()
         self.name = 'Enemy'
         self.hp = 1
         self.str = 1
@@ -36,9 +39,36 @@ class Enemy(Entity):
         
 class Rat(Enemy):
     def __init__(self):
+        super().__init__()
         self.name = 'Rat'
-        self.hp = 5
+        self.hp = 4
         self.str = 1
+        
+class Slime(Enemy):
+    def __init__(self):
+        super().__init__()
+        self.name = 'Slime'
+        self.hp = 6
+        self.str = 1
+        
+class Goblin(Enemy):
+    def __init__(self):
+        super().__init__()
+        self.name = 'Goblin'
+        self.hp = 8
+        self.str = 2
+
+def random_enemy(tier=None):
+    enemies = [Rat, Slime, Goblin]
+    
+    match tier:
+        case 1:
+            enemies = [Rat, Slime]
+        case 2:
+            enemies = [Goblin]
+            
+    result = random.choice(enemies)
+    return result()
 
 def msg(string, duration=0.5):
     print(f'\n{string}')
@@ -54,9 +84,8 @@ def main():
         os.system('cls')
         match inp:
             case '1':
-                enemy = Rat()
+                enemy = random_enemy(2)
                 is_player_turn = True
-                
                 while True:
                     os.system('cls')
                     print(plr.get_status())
@@ -93,8 +122,7 @@ def main():
                 inp = input('> ')
         os.system('cls')
     os.system('cls')
-    print(f"{plr.name}'s adventure is over.\nThe End")
-    
+    print(f"\n    {plr.name}'s adventure is over.\n\n           The End\n")
 
 if __name__ == '__main__':
     main()
