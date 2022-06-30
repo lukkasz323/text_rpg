@@ -38,16 +38,22 @@ class Player(Entity):
         self.lvl = 1
         self.xp = 0
         self.gold = 0
+        self.weapon = None
+        self.armor = None
+        self.bed = None
         self.day = 1
         
-        self.table_xp = {1: 10, 2: 40, 3: 100, 4: 200, 5: 500}
-        self.table_str = {1: 1, 2: 1, 2: 1, 4: 2, 5: 2}
+        self.table_xp = {1: 10, 2: 20, 3: 50, 4: 100, 5: 200}
+        self.table_str = {1: 1, 2: 1, 2: 2, 4: 2, 5: 3}
         self.rest = 5
         
     def lvl_up(self):
+        gain_hp = self.lvl
         gain_str = self.table_str[self.lvl]
         
         self.xp -= self.table_xp[self.lvl]
+        self.hp_max += gain_hp
+        self.hp += gain_hp
         self.str += gain_str
         self.lvl += 1
         return gain_str
@@ -59,7 +65,7 @@ class Player(Entity):
             return False
         
     def get_status(self):
-        return f'[{self.name}] - [HP: {self.hp}, STR: {self.str}] - [LVL: {self.lvl}, XP: {self.xp}] - [GOLD: {self.gold}] - [DAY: {self.day}]\n'
+        return f'[{self.name}] - [HP: {self.hp}/{self.hp_max}, STR: {self.str}] - [LVL: {self.lvl}, XP: {self.xp}] - [GOLD: {self.gold}] - [DAY: {self.day}] - [W: {self.weapon} A: {self.armor} BED: {self.bed}]\n'
 
 class Enemy(Entity):
     def __init__(self):
@@ -78,9 +84,9 @@ class Rat(Enemy):
     def __init__(self):
         super().__init__()
         self.name = 'Rat'
-        self.hp_max = 4
+        self.hp_max = 3
         self.hp = self.hp_max
-        self.str = 1
+        self.str = 2
         self.reward_xp = 7
         self.reward_gold = 0
         
@@ -88,10 +94,10 @@ class Slime(Enemy):
     def __init__(self):
         super().__init__()
         self.name = 'Slime'
-        self.hp_max = 6
+        self.hp_max = 5
         self.hp = self.hp_max
         self.str = 1
-        self.reward_xp = 5
+        self.reward_xp = 6
         self.reward_gold = 1
         
 class Goblin(Enemy):
@@ -102,7 +108,7 @@ class Goblin(Enemy):
         self.hp = self.hp_max
         self.str = 2
         self.reward_xp = 9
-        self.reward_gold = 3
+        self.reward_gold = 6
         
 class Wolf(Enemy):
     def __init__(self):
@@ -111,7 +117,7 @@ class Wolf(Enemy):
         self.hp_max = 10
         self.hp = self.hp_max
         self.str = 3
-        self.reward_xp = 12
+        self.reward_xp = 15
         self.reward_gold = 0
         
 class Zombie(Enemy):
@@ -137,30 +143,32 @@ class Bandit(Enemy):
 def random_enemy(obj, tier=None):
     enemies = [Rat, Slime, Goblin]
     
-    enemies = {1: [Rat, Slime], 2: [Slime, Goblin], 3: [Goblin, Wolf],
-               4: [Wolf, Zombie], 5: [Wolf, Zombie, Bandit],
-               6: [Wolf, Bandit], 7: [Bandit]}
-    
-    match obj.day:
-        case 1:
-            enemies = [Rat, Slime]
-        case 2:
-            enemies = [Slime, Goblin]
-        case 3:
-            enemies = [Goblin, Wolf]
-        case 4:
-            enemies = [Wolf, Zombie]
-        case 5:
-            enemies = [Wolf, Zombie, Bandit]
-        case 6:
-            enemies = [Wolf, Bandit]
-        case 7:
-            enemies = [Bandit]
+    enemies = {1: [Rat], 
+               2: [Rat, Slime],
+               3: [Rat, Slime], 
+               3: [Rat, Slime],
+               4: [Slime],
+               5: [Slime, Goblin],
+               6: [Slime, Goblin],
+               6: [Slime, Goblin],
+               7: [Goblin], 
+               8: [Goblin, Wolf],
+               9: [Goblin, Wolf],
+               9: [Goblin, Wolf],
+               10: [Wolf], 
+               11: [Wolf, Zombie],
+               12: [Wolf, Zombie],
+               12: [Wolf, Zombie],
+               13: [Zombie],
+               14: [Zombie, Bandit],
+               16: [Zombie, Bandit], 
+               16: [Zombie, Bandit], 
+               17: [Bandit]}
             
-    result = random.choice(enemies)
+    result = random.choice(enemies[obj.day])
     return result()
 
-def msg(string, duration=0.5):
+def msg(string, duration=1.0):
     print(f'\n {string}')
     time.sleep(duration)
 
@@ -188,32 +196,32 @@ def main():
                                 match inp:
                                     case '1':
                                         dmg = plr.attack(enemy)
-                                        msg(f'{plr.name} attacks for {dmg}.')
+                                        msg(f'{plr.name} attacks for {dmg}.', 0.5)
                                     case '2':
-                                        msg('Fleeing!', 1)
+                                        msg('Fleeing!')
                                         break
                                     case _:
-                                        msg('You do nothing.')
+                                        msg('You do nothing.', 0.5)
                                 is_player_turn = False
                             else:
                                 dmg = enemy.attack(plr)
                                 msg(f'{enemy.name} attacks for {dmg}.')
                                 is_player_turn = True
                         else:
-                            msg(f'Enemy defeated!\nReward: {enemy.reward_xp} XP | {enemy.reward_gold} Gold', 1)
+                            msg(f'Enemy defeated!\nReward: {enemy.reward_xp} XP | {enemy.reward_gold} Gold')
                             plr.xp += enemy.reward_xp
                             plr.gold += enemy.reward_gold
                             try:
                                 if plr.is_lvl_up_available():
                                     gain_str = plr.lvl_up()
-                                    msg(f'LEVEL UP!\n  +{gain_str} STR', 1)
+                                    msg(f'LEVEL UP!\n  +{gain_str} STR')
                             except KeyError:
                                 break
                             break
                     else:
                         break
                 if plr.hp <= 0:
-                    msg("You've died.", 1)
+                    msg("You've died.")
                     break
                 plr.day += 1
             case '2':
