@@ -2,6 +2,7 @@ import os
 import time
 import random
 
+# [Entities]
 class Entity:
     def __init__(self):
         self.name = 'Entity'
@@ -10,7 +11,7 @@ class Entity:
         self.str = 1
         
     def attack(self, target):
-        dmg = self.get_dmg()
+        dmg = self.get_dmg(target)
         target.hp_sub(dmg)
         return dmg
     
@@ -28,7 +29,7 @@ class Entity:
     def hp_sub(self, n):
         self.hp -= n
         
-    def get_dmg(self):
+    def get_dmg(self, target):
         return self.str
         
 class Player(Entity):
@@ -47,9 +48,9 @@ class Player(Entity):
         self.bed = Bed
         self.dmg = self.str + self.weapon.dmg
         
-        self.table_xp = {1: 10, 2: 20, 3: 30, 4: 40, 5: float('inf')}
-        self.table_str = {1: 1, 2: 1, 3: 2, 4: 2, 5: 3}
-            
+        self.table_xp = [0, 10, 20, 50, 100, 200, 500, float('inf')]
+        self.table_str = [0, 1, 1, 2, 2, 3, 3, float('inf')]
+         
     def buy(self, item, type=None):
         match type:
             case 'weapon':
@@ -67,12 +68,6 @@ class Player(Entity):
         self.str += gain_str
         self.lvl += 1
         return gain_str
-        
-    def is_lvl_up_available(self):
-        if self.xp >= self.table_xp[self.lvl]:
-            return True
-        else:
-            return False
     
     def get_dmg(self):
         return self.str + self.weapon.dmg
@@ -91,7 +86,10 @@ class Enemy(Entity):
         self.reward_xp = 1
         self.reward_gold = 1
         self.dmg = self.str
-        
+    
+    def get_dmg(self, target):
+        return self.str - target.armor.defense
+    
     def get_status(self):
         return f' [{self.name}] - [HP: {self.hp}]\n'
         
@@ -159,7 +157,7 @@ class Cobra(Enemy):
     def __init__(self):
         super().__init__()
         self.name = 'Cobra'
-        self.hp_max = 12
+        self.hp_max = 14
         self.hp = self.hp_max
         self.str = 6
         self.reward_xp = 23
@@ -184,6 +182,16 @@ class Werewolf(Enemy):
         self.str = 7
         self.reward_xp = 32
         self.reward_gold = 0
+        
+class Ogre(Enemy):
+    def __init__(self):
+        super().__init__()
+        self.name = 'Ogre'
+        self.hp_max = 40
+        self.hp = self.hp_max
+        self.str = 6
+        self.reward_xp = 23
+        self.reward_gold = 21
 
 class Boss(Enemy):
     def __init__(self):
@@ -195,10 +203,12 @@ class Boss(Enemy):
         self.reward_xp = 0
         self.reward_gold = 0
 
+# [Items]
 class Item():
     name = None
     value = 0
-        
+
+# Weapons
 class Weapon(Item):
     name = None
     value = 0
@@ -209,17 +219,30 @@ class Club(Weapon):
     value = 8
     dmg = 2
         
+# Armors
 class Armor(Item):
     name = None
     value = 0
     defense = 0
     
+# Beds
 class Bed(Item):
     name = None
     value = 0
     regen = 5
+    
+class SimpleBed(Bed):
+    name = 'Simple Bed'
+    value = 20
+    regen = 10
+    
+class ComfortableBed(Bed):
+    name = 'Comfortable Bed'
+    value = 100
+    regen = 20
 
-def random_enemy(obj):
+# [Functions]
+def random_enemy(plr):
     enemies = {1: [Rat], 
                2: [Rat, Slime],
                3: [Rat, Slime], 
@@ -252,10 +275,14 @@ def random_enemy(obj):
                29: [Ghoul, Werewolf],
                30: [Ghoul, Werewolf],
                31: [Ghoul, Werewolf],
-               32: [Werewolf]}
+               32: [Werewolf],
+               33: [Werewolf, Ogre],
+               34: [Werewolf, Ogre],
+               35: [Werewolf, Ogre],
+               36: [Ogre]}
     
     try:        
-        result = random.choice(enemies[obj.day])
+        result = random.choice(enemies[plr.day])
     except KeyError:
         result = Boss
     
@@ -267,9 +294,9 @@ def msg(string, duration=1.0):
 
 def main():
     plr = Player()
-    weapons = {1: Weapon, 2: Club}
-    armors = {1: Armor}
-    beds = {1: Bed}
+    weapon_list = [Weapon, Club]
+    armor_list = [Armor]
+    bed_list = [Bed, SimpleBed, ComfortableBed]
 
     while True:
         print(plr.get_status())
@@ -307,7 +334,7 @@ def main():
                             msg(f'Enemy defeated!\n  Reward: {enemy.reward_xp} XP | {enemy.reward_gold} Gold')
                             plr.xp += enemy.reward_xp
                             plr.gold += enemy.reward_gold
-                            while plr.is_lvl_up_available():
+                            while plr.xp >= plr.table_xp[plr.lvl]:
                                 gain_str = plr.lvl_up()
                                 msg(f'LEVEL UP!\n  +{gain_str} STR')
                             break
@@ -339,20 +366,54 @@ def main():
                 inp = input('> ')
                 os.system('cls')
                 match inp:
+                    # Weapons
                     case '1':
                         print(plr.get_status())
                         print(' [SHOP] - [Weapons]\n\n Name / Damage / Price')
-                        for w in weapons:
-                            print(f' ({w}) {weapons[w].name} | {weapons[w].dmg} | {weapons[w].value}')
+                        for i, weapon in enumerate(weapon_list):
+                            print(f' ({i + 1}) {weapon.name} | {weapon.dmg} | {weapon.value}')
                         inp = input('> ')
                         try:
-                            plr.weapon = weapons[int(inp)]
-                        except KeyError:
+                            weapon = weapon_list[int(inp) - 1]
+                            if plr.gold >= weapon.value:
+                                plr.gold -= weapon.value
+                                plr.weapon = weapon
+                            else:
+                                msg('Not enough gold!')
+                        except (IndexError, ValueError):
                             pass
+                    # Armors
                     case '2':
                         print(plr.get_status())
-                        print(' [SHOP] - [Armors]\n')
+                        print(' [SHOP] - [Armors]\n\n Name / Defense / Price')
+                        for i, armor in enumerate(armor_list):
+                            print(f' ({i + 1}) {armor.name} | {armor.defense} | {armor.value}')
                         inp = input('> ')
+                        try:
+                            armor = armor_list[int(inp) - 1]
+                            if plr.gold >= armor.value:
+                                plr.gold -= armor.value
+                                plr.armor = armor
+                            else:
+                                msg('Not enough gold!')
+                        except (IndexError, ValueError):
+                            pass
+                    # Beds
+                    case '3':
+                        print(plr.get_status())
+                        print(' [SHOP] - [Beds]\n\n Name / Regen / Price')
+                        for i, bed in enumerate(bed_list):
+                            print(f' ({i + 1}) {bed.name} | {bed.regen} | {bed.value}')
+                        inp = input('> ')
+                        try:
+                            bed = bed_list[int(inp) - 1]
+                            if plr.gold >= bed.value:
+                                plr.gold -= bed.value
+                                plr.bed = bed
+                            else:
+                                msg('Not enough gold!')
+                        except (IndexError, ValueError):
+                            pass
             case _:
                 exec(inp) # Debug, TO BE REMOVED!
 
@@ -362,3 +423,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+# TODO: Encapsulate shops
+# TODO: Add "bought?" after "Price" in shop.
