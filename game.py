@@ -69,9 +69,9 @@ class Player(Entity):
         self.lvl += 1
         return gain_str
     
-    def get_dmg(self):
+    def get_dmg(self, target):
         return self.str + self.weapon.dmg
-    
+
     def get_status(self):
         return f'[{self.name}] - [HP: {self.hp}/{self.hp_max}, STR: {self.str}] - [LVL: {self.lvl}, XP: {self.xp}/{self.table_xp[self.lvl]}]'\
                 f' - [GOLD: {self.gold}] - [DAY: {self.day}]\n[W: {self.weapon.name} A: {self.armor.name} BED: {self.bed.name}]\n'
