@@ -46,10 +46,9 @@ class Player(Entity):
         self.weapon = Weapon
         self.armor = Armor
         self.bed = Bed
-        self.dmg = self.str + self.weapon.dmg
         
         self.table_xp = [0, 10, 20, 50, 100, 200, 500, float('inf')]
-        self.table_str = [0, 1, 1, 2, 2, 3, 3, float('inf')]
+        self.table_str = [0, 1, 2, 1, 3, 2, 3, 5, float('inf')]
          
     def buy(self, item, type=None):
         match type:
@@ -74,7 +73,8 @@ class Player(Entity):
 
     def get_status(self):
         return f'[{self.name}] - [HP: {self.hp}/{self.hp_max}, STR: {self.str}] - [LVL: {self.lvl}, XP: {self.xp}/{self.table_xp[self.lvl]}]'\
-                f' - [GOLD: {self.gold}] - [DAY: {self.day}]\n[W: {self.weapon.name} A: {self.armor.name} BED: {self.bed.name}]\n'
+                f' - [GOLD: {self.gold}] - [DAY: {self.day}]\n[W: {self.weapon.name} ({self.weapon.dmg}), A: {self.armor.name}'\
+                f' ({self.armor.defense}), BED: {self.bed.name} ({self.bed.regen})]\n'
 
 class Enemy(Entity):
     def __init__(self):
@@ -85,10 +85,13 @@ class Enemy(Entity):
         self.str = 1
         self.reward_xp = 1
         self.reward_gold = 1
-        self.dmg = self.str
     
     def get_dmg(self, target):
-        return self.str - target.armor.defense
+        dmg = self.str - target.armor.defense
+        if dmg > 0:
+            return dmg
+        else:
+            return 0
     
     def get_status(self):
         return f' [{self.name}] - [HP: {self.hp}]\n'
@@ -149,7 +152,7 @@ class Bandit(Enemy):
         self.name = 'Bandit'
         self.hp_max = 20
         self.hp = self.hp_max
-        self.str = 4
+        self.str = 3
         self.reward_xp = 16
         self.reward_gold = 14
 
@@ -159,8 +162,8 @@ class Cobra(Enemy):
         self.name = 'Cobra'
         self.hp_max = 14
         self.hp = self.hp_max
-        self.str = 6
-        self.reward_xp = 23
+        self.str = 5
+        self.reward_xp = 26
         self.reward_gold = 0
         
 class Ghoul(Enemy):
@@ -169,7 +172,7 @@ class Ghoul(Enemy):
         self.name = 'Ghoul'
         self.hp_max = 22
         self.hp = self.hp_max
-        self.str = 5
+        self.str = 4
         self.reward_xp = 17
         self.reward_gold = 19
         
@@ -179,7 +182,7 @@ class Werewolf(Enemy):
         self.name = 'Werewolf'
         self.hp_max = 30
         self.hp = self.hp_max
-        self.str = 7
+        self.str = 6
         self.reward_xp = 32
         self.reward_gold = 0
         
@@ -189,7 +192,7 @@ class Ogre(Enemy):
         self.name = 'Ogre'
         self.hp_max = 40
         self.hp = self.hp_max
-        self.str = 6
+        self.str = 5
         self.reward_xp = 23
         self.reward_gold = 21
 
@@ -209,21 +212,71 @@ class Item():
     value = 0
 
 # Weapons
-class Weapon(Item):
+class Weapon(Item): # value per dmg
     name = None
     value = 0
     dmg = 0
         
-class Club(Weapon):
+class Club(Weapon): # 4.00
     name = 'Club'
-    value = 8
+    value = 8 
     dmg = 2
+    
+class Dagger(Weapon): # 4.25
+    name = 'Dagger'
+    value = 17
+    dmg = 4
+    
+class Shortsword(Weapon): # 4.33
+    name = 'Shortsword'
+    value = 26
+    dmg = 6
+    
+class Spear(Weapon): # 4.375
+    name = 'Spear'
+    value = 35
+    dmg = 8
+    
+class Mace(Weapon): # 4.58
+    name = 'Mace'
+    value = 55
+    dmg = 12
+    
+class Saber(Weapon): # 5.00
+    name = 'Saber'
+    value = 80
+    dmg = 16
+    
+class Katana(Weapon): # 5.83
+    name = 'Katana'
+    value = 140
+    dmg = 24
+    
+class Claymore(Weapon): # 7.50
+    name = 'Claymore'
+    value = 300
+    dmg = 40
         
 # Armors
-class Armor(Item):
+class Armor(Item): # value per defense
     name = None
     value = 0
     defense = 0
+
+class LeatherArmor(Armor): # 15.00
+    name = 'Leather Armor'
+    value = 15
+    defense = 1
+    
+class Chainmail(Armor): # 16.66
+    name = 'Chainmail'
+    value = 50
+    defense = 3
+    
+class PlateArmor(Armor): # 20.00
+    name = 'Plate Armor'
+    value = 100
+    defense = 5
     
 # Beds
 class Bed(Item):
@@ -294,8 +347,8 @@ def msg(string, duration=1.0):
 
 def main():
     plr = Player()
-    weapon_list = [Weapon, Club]
-    armor_list = [Armor]
+    weapon_list = [Weapon, Club, Dagger, Shortsword, Spear, Mace, Saber, Katana, Claymore]
+    armor_list = [Armor, LeatherArmor, Chainmail, PlateArmor]
     bed_list = [Bed, SimpleBed, ComfortableBed]
 
     while True:
@@ -362,7 +415,7 @@ def main():
                         break
             case '3':
                 print(plr.get_status())
-                print(' [SHOP]\n (1) Weapons\n (2) Armors\n\n (ENTER) Back')
+                print(' [SHOP]\n (1) Weapons\n (2) Armors\n (3) Beds\n (ENTER) Back')
                 inp = input('> ')
                 os.system('cls')
                 match inp:
@@ -371,7 +424,7 @@ def main():
                         print(plr.get_status())
                         print(' [SHOP] - [Weapons]\n\n Name / Damage / Price')
                         for i, weapon in enumerate(weapon_list):
-                            print(f' ({i + 1}) {weapon.name} | {weapon.dmg} | {weapon.value}')
+                            print(f' ({i + 1}) {weapon.name} / {weapon.dmg} / {weapon.value}')
                         inp = input('> ')
                         try:
                             weapon = weapon_list[int(inp) - 1]
@@ -387,7 +440,7 @@ def main():
                         print(plr.get_status())
                         print(' [SHOP] - [Armors]\n\n Name / Defense / Price')
                         for i, armor in enumerate(armor_list):
-                            print(f' ({i + 1}) {armor.name} | {armor.defense} | {armor.value}')
+                            print(f' ({i + 1}) {armor.name} / {armor.defense} / {armor.value}')
                         inp = input('> ')
                         try:
                             armor = armor_list[int(inp) - 1]
@@ -403,7 +456,7 @@ def main():
                         print(plr.get_status())
                         print(' [SHOP] - [Beds]\n\n Name / Regen / Price')
                         for i, bed in enumerate(bed_list):
-                            print(f' ({i + 1}) {bed.name} | {bed.regen} | {bed.value}')
+                            print(f' ({i + 1}) {bed.name} / {bed.regen} / {bed.value}')
                         inp = input('> ')
                         try:
                             bed = bed_list[int(inp) - 1]
@@ -425,4 +478,7 @@ if __name__ == '__main__':
     main()
     
 # TODO: Encapsulate shops
+
+# TODO: Add missing hp level up msg
+# TODO: "Bought {item}" msg
 # TODO: Add "bought?" after "Price" in shop.
