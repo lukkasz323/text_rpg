@@ -66,7 +66,7 @@ class Player(Entity):
         self.hp += gain_hp
         self.str += gain_str
         self.lvl += 1
-        return gain_str
+        return gain_hp, gain_str
     
     def get_dmg(self, target):
         return self.str + self.weapon.dmg
@@ -352,6 +352,7 @@ def main():
     bed_list = [Bed, SimpleBed, ComfortableBed]
 
     while True:
+        os.system('cls')
         print(plr.get_status())
         print(' [HUB]\n (1) Fight\n (2) Rest\n (3) Shop')
         inp = input('> ')
@@ -388,8 +389,8 @@ def main():
                             plr.xp += enemy.reward_xp
                             plr.gold += enemy.reward_gold
                             while plr.xp >= plr.table_xp[plr.lvl]:
-                                gain_str = plr.lvl_up()
-                                msg(f'LEVEL UP!\n  +{gain_str} STR')
+                                gain = plr.lvl_up()
+                                msg(f'LEVEL UP!\n  +{gain[0]} HP, +{gain[1]} STR')
                             break
                     else:
                         break
@@ -469,9 +470,6 @@ def main():
                             pass
             case _:
                 exec(inp) # Debug, TO BE REMOVED!
-
-        os.system('cls')
-    os.system('cls')
     print(f"\n    {plr.name}'s adventure is over.\n\n             The End\n")
 
 if __name__ == '__main__':
