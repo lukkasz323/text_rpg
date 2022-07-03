@@ -186,23 +186,53 @@ class Werewolf(Enemy):
         self.reward_xp = 32
         self.reward_gold = 0
         
-class Ogre(Enemy):
+class Skeleton(Enemy):
     def __init__(self):
         super().__init__()
-        self.name = 'Ogre'
+        self.name = 'Skeleton'
         self.hp_max = 40
         self.hp = self.hp_max
         self.str = 5
         self.reward_xp = 23
         self.reward_gold = 21
+        
+class Ogre(Enemy):
+    def __init__(self):
+        super().__init__()
+        self.name = 'Ogre'
+        self.hp_max = 60
+        self.hp = self.hp_max
+        self.str = 5
+        self.reward_xp = 35
+        self.reward_gold = 25
+        
+class Troll(Enemy):
+    def __init__(self):
+        super().__init__()
+        self.name = 'Ogre'
+        self.hp_max = 70
+        self.hp = self.hp_max
+        self.str = 5
+        self.reward_xp = 40
+        self.reward_gold = 20
+        
+class Wyvern(Enemy):
+    def __init__(self):
+        super().__init__()
+        self.name = 'Wyvern'
+        self.hp_max = 80
+        self.hp = self.hp_max
+        self.str = 6
+        self.reward_xp = 70
+        self.reward_gold = 0
 
 class Boss(Enemy):
     def __init__(self):
         super().__init__()
-        self.name = 'Boss'
+        self.name = 'Dragon Lord'
         self.hp_max = 100
         self.hp = self.hp_max
-        self.str = 15
+        self.str = 10
         self.reward_xp = 0
         self.reward_gold = 0
 
@@ -329,10 +359,23 @@ def random_enemy(plr):
                30: [Ghoul, Werewolf],
                31: [Ghoul, Werewolf],
                32: [Werewolf],
-               33: [Werewolf, Ogre],
-               34: [Werewolf, Ogre],
-               35: [Werewolf, Ogre],
-               36: [Ogre]}
+               33: [Werewolf, Skeleton],
+               34: [Werewolf, Skeleton],
+               35: [Werewolf, Skeleton],
+               36: [Skeleton],
+               37: [Skeleton, Ogre],
+               38: [Skeleton, Ogre],
+               39: [Skeleton, Ogre],
+               40: [Ogre],
+               41: [Ogre, Troll],
+               42: [Ogre, Troll],
+               43: [Ogre, Troll],
+               44: [Troll],
+               45: [Troll, Wyvern],
+               46: [Troll, Wyvern],
+               47: [Troll, Wyvern],
+               48: [Wyvern],
+               49: [Wyvern]}
     
     try:        
         result = random.choice(enemies[plr.day])
@@ -350,6 +393,7 @@ def main():
     weapon_list = [Weapon, Club, Dagger, Shortsword, Spear, Mace, Saber, Katana, Claymore]
     armor_list = [Armor, LeatherArmor, Chainmail, PlateArmor]
     bed_list = [Bed, SimpleBed, ComfortableBed]
+    is_boss_defeated = False
 
     while True:
         os.system('cls')
@@ -391,11 +435,16 @@ def main():
                             while plr.xp >= plr.table_xp[plr.lvl]:
                                 gain = plr.lvl_up()
                                 msg(f'LEVEL UP!\n  +{gain[0]} HP, +{gain[1]} STR')
+                            if enemy == Boss:
+                                is_boss_defeated = True
                             break
                     else:
                         break
                 if plr.hp <= 0:
-                    msg("You've died.")
+                    msg("You've died.", 2)
+                    break
+                if is_boss_defeated:
+                    msg('The final boss has been defeated!', 2)
                     break
                 plr.day += 1
             case '2':
@@ -476,7 +525,7 @@ if __name__ == '__main__':
     main()
     
 # TODO: Encapsulate shops
-
+# TODO: Fix ending
 # TODO: Add missing hp level up msg
 # TODO: "Bought {item}" msg
 # TODO: Add "bought?" after "Price" in shop.
