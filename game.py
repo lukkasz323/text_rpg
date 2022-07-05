@@ -69,12 +69,12 @@ class Player(Entity):
         return gain_hp, gain_str
     
     def get_dmg(self, target):
-        return self.str + self.weapon.dmg
+        return self.str + self.weapon.stat
 
     def get_status(self):
         return f'[{self.name}] - [HP: {self.hp}/{self.hp_max}, STR: {self.str}] - [LVL: {self.lvl}, XP: {self.xp}/{self.table_xp[self.lvl]}]'\
-                f' - [GOLD: {self.gold}] - [DAY: {self.day}]\n[W: {self.weapon.name} ({self.weapon.dmg}), A: {self.armor.name}'\
-                f' ({self.armor.defense}), BED: {self.bed.name} ({self.bed.regen})]\n'
+                f' - [GOLD: {self.gold}] - [DAY: {self.day}]\n[W: {self.weapon.name} ({self.weapon.stat}), A: {self.armor.name}'\
+                f' ({self.armor.stat}), BED: {self.bed.name} ({self.bed.stat})]\n'
 
 class Enemy(Entity):
     def __init__(self):
@@ -87,7 +87,7 @@ class Enemy(Entity):
         self.reward_gold = 1
     
     def get_dmg(self, target):
-        dmg = self.str - target.armor.defense
+        dmg = self.str - target.armor.stat
         if dmg > 0:
             return dmg
         else:
@@ -240,89 +240,90 @@ class Boss(Enemy):
 class Item():
     name = None
     value = 0
+    stat = 0
 
 # Weapons
 class Weapon(Item): # value per dmg
     name = None
     value = 0
-    dmg = 0
+    stat = 0
         
 class Club(Weapon): # 4.00
     name = 'Club'
     value = 8 
-    dmg = 2
+    stat = 2
     
 class Dagger(Weapon): # 4.25
     name = 'Dagger'
     value = 17
-    dmg = 4
+    stat = 4
     
 class Shortsword(Weapon): # 4.33
     name = 'Shortsword'
     value = 26
-    dmg = 6
+    stat = 6
     
 class Spear(Weapon): # 4.375
     name = 'Spear'
     value = 35
-    dmg = 8
+    stat = 8
     
 class Mace(Weapon): # 4.58
     name = 'Mace'
     value = 55
-    dmg = 12
+    stat = 12
     
 class Saber(Weapon): # 5.00
     name = 'Saber'
     value = 80
-    dmg = 16
+    stat = 16
     
 class Katana(Weapon): # 5.83
     name = 'Katana'
     value = 140
-    dmg = 24
+    stat = 24
     
 class Claymore(Weapon): # 7.50
     name = 'Claymore'
     value = 300
-    dmg = 40
+    stat = 40
         
 # Armors
 class Armor(Item): # value per defense
     name = None
     value = 0
-    defense = 0
+    stat = 0
 
 class LeatherArmor(Armor): # 15.00
     name = 'Leather Armor'
     value = 15
-    defense = 1
+    stat = 1
     
 class Chainmail(Armor): # 16.66
     name = 'Chainmail'
     value = 50
-    defense = 3
+    stat = 3
     
 class PlateArmor(Armor): # 20.00
     name = 'Plate Armor'
     value = 100
-    defense = 5
+    stat = 5
     
 # Beds
 class Bed(Item):
     name = None
     value = 0
-    regen = 5
+    stat = 5
     
 class SimpleBed(Bed):
     name = 'Simple Bed'
     value = 20
-    regen = 10
+    stat = 10
     
 class ComfortableBed(Bed):
     name = 'Comfortable Bed'
     value = 100
-    regen = 20
+    stat = 20
 
 # [Functions]
 def random_enemy(plr):
@@ -387,6 +388,25 @@ def random_enemy(plr):
 def msg(string, duration=1.0):
     print(f'\n {string}')
     time.sleep(duration)
+
+def shop(plr, item_list):
+    for i, item in enumerate(item_list):
+        print(f' ({i + 1}) {item.name} / {item.stat} / {item.value}')
+    inp = input('> ')
+    try:
+        item = item_list[int(inp) - 1]
+        if plr.gold >= item.value:
+            plr.gold -= item.value
+            if issubclass(item, Weapon):
+                plr.weapon = item
+            elif issubclass(item, Armor):
+                plr.armor = item
+            elif issubclass(item, Bed):
+                plr.bed = item
+        else:
+            msg('Not enough gold!')
+    except (IndexError, ValueError):
+        pass
 
 def main():
     plr = Player()
@@ -457,7 +477,7 @@ def main():
                     print(' [REST]\n')
                     if not rested:
                         msg('Resting...', 2)
-                        total_regen = plr.hp_add(plr.bed.regen)
+                        total_regen = plr.hp_add(plr.bed.stat)
                         plr.day += 1
                         rested = True
                     else:
@@ -468,55 +488,20 @@ def main():
                 print(' [SHOP]\n (1) Weapons\n (2) Armors\n (3) Beds\n (ENTER) Back')
                 inp = input('> ')
                 os.system('cls')
+                print(plr.get_status())
                 match inp:
                     # Weapons
                     case '1':
-                        print(plr.get_status())
                         print(' [SHOP] - [Weapons]\n\n Name / Damage / Price')
-                        for i, weapon in enumerate(weapon_list):
-                            print(f' ({i + 1}) {weapon.name} / {weapon.dmg} / {weapon.value}')
-                        inp = input('> ')
-                        try:
-                            weapon = weapon_list[int(inp) - 1]
-                            if plr.gold >= weapon.value:
-                                plr.gold -= weapon.value
-                                plr.weapon = weapon
-                            else:
-                                msg('Not enough gold!')
-                        except (IndexError, ValueError):
-                            pass
+                        shop(plr, weapon_list)
                     # Armors
                     case '2':
-                        print(plr.get_status())
                         print(' [SHOP] - [Armors]\n\n Name / Defense / Price')
-                        for i, armor in enumerate(armor_list):
-                            print(f' ({i + 1}) {armor.name} / {armor.defense} / {armor.value}')
-                        inp = input('> ')
-                        try:
-                            armor = armor_list[int(inp) - 1]
-                            if plr.gold >= armor.value:
-                                plr.gold -= armor.value
-                                plr.armor = armor
-                            else:
-                                msg('Not enough gold!')
-                        except (IndexError, ValueError):
-                            pass
+                        shop(plr, armor_list)
                     # Beds
                     case '3':
-                        print(plr.get_status())
                         print(' [SHOP] - [Beds]\n\n Name / Regen / Price')
-                        for i, bed in enumerate(bed_list):
-                            print(f' ({i + 1}) {bed.name} / {bed.regen} / {bed.value}')
-                        inp = input('> ')
-                        try:
-                            bed = bed_list[int(inp) - 1]
-                            if plr.gold >= bed.value:
-                                plr.gold -= bed.value
-                                plr.bed = bed
-                            else:
-                                msg('Not enough gold!')
-                        except (IndexError, ValueError):
-                            pass
+                        shop(plr, bed_list)
             case _:
                 exec(inp) # Debug, TO BE REMOVED!
     print(f"\n    {plr.name}'s adventure is over.\n\n             The End\n")
@@ -524,8 +509,6 @@ def main():
 if __name__ == '__main__':
     main()
     
-# TODO: Encapsulate shops
 # TODO: Fix ending
-# TODO: Add missing hp level up msg
 # TODO: "Bought {item}" msg
 # TODO: Add "bought?" after "Price" in shop.
