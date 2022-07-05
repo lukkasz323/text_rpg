@@ -403,6 +403,7 @@ def shop(plr, item_list):
                 plr.armor = item
             elif issubclass(item, Bed):
                 plr.bed = item
+            msg(f'Bought {item.name}!')
         else:
             msg('Not enough gold!')
     except (IndexError, ValueError):
@@ -510,5 +511,4 @@ if __name__ == '__main__':
     main()
     
 # TODO: Fix ending
-# TODO: "Bought {item}" msg
 # TODO: Add "bought?" after "Price" in shop.
