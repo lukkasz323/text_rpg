@@ -390,19 +390,24 @@ def msg(string, duration=1.0):
     time.sleep(duration)
 
 def shop(plr, item_list):
-    for i, item in enumerate(item_list):
-        print(f' ({i + 1}) {item.name} / {item.stat} / {item.value}')
+    for i, element in enumerate(item_list):
+        item = element[0]
+        is_owned = element[1]
+        print(f' ({i + 1}) {item.name} / {item.stat} / {item.value} / [{is_owned}]')
     inp = input('> ')
     try:
-        item = item_list[int(inp) - 1]
+        element = item_list[int(inp) - 1]
+        item = element[0]
         if plr.gold >= item.value:
-            plr.gold -= item.value
+            if element[1] is False:
+                plr.gold -= item.value
             if issubclass(item, Weapon):
                 plr.weapon = item
             elif issubclass(item, Armor):
                 plr.armor = item
             elif issubclass(item, Bed):
                 plr.bed = item
+            element[1] = True
             msg(f'Bought {item.name}!')
         else:
             msg('Not enough gold!')
@@ -411,9 +416,9 @@ def shop(plr, item_list):
 
 def main():
     plr = Player()
-    weapon_list = [Weapon, Club, Dagger, Shortsword, Spear, Mace, Saber, Katana, Claymore]
-    armor_list = [Armor, LeatherArmor, Chainmail, PlateArmor]
-    bed_list = [Bed, SimpleBed, ComfortableBed]
+    weapon_list = [[Weapon, True], [Club, False], [Dagger, False], [Shortsword, False], [Spear, False], [Mace, False], [Saber, False], [Katana, False], [Claymore, False]]
+    armor_list = [[Armor, True], [LeatherArmor, False], [Chainmail, False], [PlateArmor, False]]
+    bed_list = [[Bed, True], [SimpleBed, False], [ComfortableBed, False]]
     is_boss_defeated = False
 
     while True:
@@ -493,15 +498,15 @@ def main():
                 match inp:
                     # Weapons
                     case '1':
-                        print(' [SHOP] - [Weapons]\n\n Name / Damage / Price')
+                        print(' [SHOP] - [Weapons]\n\n Name / Damage / Price / Owned')
                         shop(plr, weapon_list)
                     # Armors
                     case '2':
-                        print(' [SHOP] - [Armors]\n\n Name / Defense / Price')
+                        print(' [SHOP] - [Armors]\n\n Name / Defense / Price / Owned')
                         shop(plr, armor_list)
                     # Beds
                     case '3':
-                        print(' [SHOP] - [Beds]\n\n Name / Regen / Price')
+                        print(' [SHOP] - [Beds]\n\n Name / Regen / Price / Owned')
                         shop(plr, bed_list)
             case _:
                 exec(inp) # Debug, TO BE REMOVED!
@@ -511,4 +516,3 @@ if __name__ == '__main__':
     main()
     
 # TODO: Fix ending
-# TODO: Add "bought?" after "Price" in shop.
