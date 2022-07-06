@@ -461,7 +461,7 @@ def main():
                             while plr.xp >= plr.table_xp[plr.lvl]:
                                 gain = plr.lvl_up()
                                 msg(f'LEVEL UP!\n  +{gain[0]} HP, +{gain[1]} STR')
-                            if enemy == Boss:
+                            if enemy.__class__ == Boss:
                                 is_boss_defeated = True
                             break
                     else:
